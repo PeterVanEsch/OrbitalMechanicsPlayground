@@ -56,11 +56,11 @@
   <body>
     <div id="controls">
       <label for="timeStep">Time Step:</label>
-      <input type="range" id="timeStep" name="timeStep" min="1" max="365" value="24">
+      <input type="range" id="timeStep" name="timeStep" min="0" max="365" value="24">
       <span id="timeStepValue">24</span> seconds
       <br>
       <label for="inclination">Inclination:</label>
-      <input type="range" id="inclination" name="inclination" min="0" max="90" value="0">
+      <input type="range" id="inclination" name="inclination" min="-90" max="90" value="0">
       <span id="inclinationValue">0</span> degrees
       <br>
       <button id="toggleGrid" class="button">Toggle Grid</button>
@@ -302,7 +302,7 @@ class Planet {
         this.y = y;
         this.radius = radius;
         this.mass = mass;
-
+        this.isSun = false;
         this.orbit = [];
         this.sun = false;
         this.distance_to_sun = 0;
@@ -324,6 +324,7 @@ class Planet {
           materialOptions.emissive = 0xffffff;
           materialOptions.emissiveMap = texture;
           materialOptions.emissiveIntensity = 1;
+          this.isSun = true;
         }
 
         const material = new THREE.MeshStandardMaterial(materialOptions);
@@ -354,6 +355,10 @@ class Planet {
       }
 
       updatePosition(planets) {
+        if (this.isSun) {
+          return; // Sun stays fixed at the center
+        }
+
         let total_fx = 0;
         let total_fy = 0;
 
