@@ -354,7 +354,7 @@ class Planet {
         return [force_x, force_y];
       }
 
-      updatePosition(planets) {
+      updatePosition(planets, time) {
         if (this.isSun) {
           return; // Sun stays fixed at the center
         }
@@ -370,18 +370,23 @@ class Planet {
           total_fy += fy;
         }
 
-        this.x_vel += total_fx / this.mass * timeStep;
-        this.y_vel += total_fy / this.mass * timeStep;
+        let time_diff = 0;
+        if (time < 50) {
+          time_diff = Math.floor(time*100);
+        }
 
-        this.x += this.x_vel * timeStep;
-        this.y += this.y_vel * timeStep;
+        this.x_vel += total_fx / this.mass * timeStep * time_diff;
+        this.y_vel += total_fy / this.mass * timeStep * time_diff;
+
+        this.x += this.x_vel * timeStep * time_diff;
+        this.y += this.y_vel * timeStep * time_diff;
 
         const inclinationRad = THREE.MathUtils.degToRad(inclination);
           const z = this.y * Math.sin(inclinationRad);
           const y = this.y * Math.cos(inclinationRad);
 
         this.mesh.position.set(this.x * Planet.SCALE, z  * Planet.SCALE, y * Planet.SCALE);
-        //this.orbit.push([this.x, this.y]);
+        this.orbit.push([this.x, y, z]);
       }
     }
 
@@ -422,12 +427,19 @@ class Planet {
 
 
 
-    function animatePlanets() {
-      requestAnimationFrame(animatePlanets);
+    function animatePlanets(time) {
+      // requestAnimationFrame(animatePlanets)
 
       // Update positions
       for (let planet of planets) {
-        planet.updatePosition(planets);
+        planet.updatePosition(planets, time);
+        // {
+        //   let sphereShape = new THREE.SphereGeometry(0.1, 8, 6);
+        //   let material = new THREE.MeshBasicMaterial({ color: 0xBBBBBB })
+        //   let sphere = new THREE.Mesh(sphereShape, material)
+        //   sphere.position.set(planet.orbit);
+        //   scene.add(sphere);
+        // }
       }
 
     }
@@ -447,9 +459,11 @@ function resizeRendererToDisplaySize( renderer ) {
   return needResize;
 
 }
-
-function render() {
-
+let prev_frame_time;
+let time_diff
+function render(time) {
+  time_diff = time - prev_frame_time;
+  prev_frame_time = time;
   if ( resizeRendererToDisplaySize( renderer ) ) {
 
     const canvas = renderer.domElement;
@@ -457,7 +471,7 @@ function render() {
     camera.updateProjectionMatrix();
 
   }
-  animatePlanets();
+  animatePlanets(time_diff);
   renderer.render( scene, camera );
 
   requestAnimationFrame( render );
