@@ -59,6 +59,10 @@
       <input type="range" id="timeStep" name="timeStep" min="1" max="365" value="24">
       <span id="timeStepValue">24</span> seconds
       <br>
+      <label for="inclination">Inclination:</label>
+      <input type="range" id="inclination" name="inclination" min="0" max="90" value="0">
+      <span id="inclinationValue">0</span> degrees
+      <br>
       <button id="toggleGrid" class="button">Toggle Grid</button>
     </div>
 
@@ -104,6 +108,15 @@ const timeStepSlider = document.getElementById('timeStep');
         timeStep = event.target.value;
         timeStepValue.textContent = timeStep;
       });
+
+
+const inclinationSlider = document.getElementById('inclination');
+const inclinationValue = document.getElementById('inclinationValue');
+let inclination = 0;
+inclinationSlider.addEventListener('input', (event) => {
+    inclination = event.target.value;
+    inclinationValue.textContent = inclination;
+    });
 
 
 
@@ -358,7 +371,11 @@ class Planet {
         this.x += this.x_vel * timeStep;
         this.y += this.y_vel * timeStep;
 
-        this.mesh.position.set(this.x * Planet.SCALE,0, this.y * Planet.SCALE);
+        const inclinationRad = THREE.MathUtils.degToRad(inclination);
+          const z = this.y * Math.sin(inclinationRad);
+          const y = this.y * Math.cos(inclinationRad);
+
+        this.mesh.position.set(this.x * Planet.SCALE, z  * Planet.SCALE, y * Planet.SCALE);
         //this.orbit.push([this.x, this.y]);
       }
     }
