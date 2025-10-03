@@ -1,500 +1,488 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Assignment 5A for real</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <style>
-      html, body {
-  margin: 0;
-  height: 100%;
-}
-
-#controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      z-index: 100;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 10px;
-      border-radius: 5px;
-}
-.button {
-      display: inline-block;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-      text-align: center;
-      text-decoration: none;
-      outline: none;
-      color: #fff;
-      background-color: #4CAF50;
-      border: none;
-      border-radius: 5px;
-      box-shadow: 0 4px #999;
+<head>
+  <meta charset="utf-8" />
+  <title>Solar System (Kepler Elements) — All Planets + Pluto</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <style>
+    html, body { margin:0; height:100%; background:#000; color:#111; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; }
+    #controls {
+      position: absolute; top: 10px; left: 10px; z-index: 100;
+      background: rgba(255,255,255,0.90); padding: 10px 12px; border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35); width: 280px;
     }
-
-    .button:hover {background-color: #3e8e41}
-
-    .button:active {
-      background-color: #3e8e41;
-      box-shadow: 0 5px #666;
-      transform: translateY(4px);
+    #controls.min { height: 42px; overflow: hidden; }
+    #controls header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+    #controls label { font-weight: 600; font-size: 13px; }
+    #controls input[type="range"] { width: 200px; vertical-align: middle; }
+    .row { margin:4px 0; }
+    .button {
+      display:inline-block; padding:8px 12px; font-size:13px; cursor:pointer; color:#fff;
+      background:#2563eb; border:none; border-radius:8px; box-shadow: 0 2px 0 rgba(0,0,0,0.2);
     }
+    .button.secondary { background:#0ea5e9; }
+    .button:hover { filter:brightness(0.92); }
+    .kv { margin-left:6px; font-weight:600; }
+    #c { width: 100%; height: 100%; display: block; }
+    .note { margin-top:6px; font-size: 12px; color:#333; }
+    hr { margin:8px 0; border:none; border-top:1px solid #ddd; }
+  </style>
+</head>
+<body>
+  <div id="controls" class="">
+    <header>
+      <strong>Orbital Elements</strong>
+      <div>
+        <button id="minBtn" class="button secondary" title="Hide panel">Minimize</button>
+      </div>
+    </header>
 
-        
-
-        
-#c {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-    </style>
-  </head>
-
-  <body>
-    <div id="controls">
-      <label for="timeStep">Time Step:</label>
-      <input type="range" id="timeStep" name="timeStep" min="0" max="365" value="24">
-      <span id="timeStepValue">24</span> seconds
-      <br>
-      <label for="inclination">Inclination:</label>
-      <input type="range" id="inclination" name="inclination" min="-90" max="90" value="0">
-      <span id="inclinationValue">0</span> degrees
-      <br>
-      <button id="toggleGrid" class="button">Toggle Grid</button>
+    <div class="row">
+      <label for="bodySelect">Body:</label>
+      <select id="bodySelect">
+        <option>Mercury</option>
+        <option>Venus</option>
+        <option>Earth</option>
+        <option>Mars</option>
+        <option>Jupiter</option>
+        <option>Saturn</option>
+        <option>Uranus</option>
+        <option>Neptune</option>
+        <option>Pluto</option>
+      </select>
     </div>
 
+    <div class="row"><label>a (AU)</label> <input type="range" id="aAU" min="0.2" max="45" step="0.001"><span id="aAUVal" class="kv"></span></div>
+    <div class="row"><label>e</label>      <input type="range" id="ecc" min="0" max="0.3" step="0.0001"><span id="eccVal" class="kv"></span></div>
+    <div class="row"><label>i (deg)</label><input type="range" id="inc" min="0" max="40" step="0.01"><span id="incVal" class="kv"></span></div>
+    <div class="row"><label>Ω (deg)</label><input type="range" id="raan" min="-180" max="360" step="0.01"><span id="raanVal" class="kv"></span></div>
+    <div class="row"><label>ω (deg)</label><input type="range" id="argp" min="-180" max="360" step="0.01"><span id="argpVal" class="kv"></span></div>
+    <div class="row"><label>M₀ (deg)</label><input type="range" id="M0" min="0" max="360" step="0.01"><span id="M0Val" class="kv"></span></div>
 
-    <canvas id="c" data-engine="three.js r163"></canvas>
-    <script  type="importmap">{
-        "imports": {
-            "three": "https://threejs.org/build/three.module.js",
-            "three/addons/": "https://threejs.org/examples/jsm/"
-        }
-    }</script>
+    <div class="row" style="margin-top:6px;">
+      <label><input type="checkbox" id="applyNow" checked> Apply at now (reset epoch)</label>
+    </div>
+
+    <div class="row">
+      <label for="timeStep">Time Step (hours / real second):</label><br>
+      <input type="range" id="timeStep" min="0" max="5000" step="1" value="24">
+      <strong><span id="timeStepValue">24</span> h/s</strong>
+    </div>
+
+    <div class="row" style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+      <button id="resetSel" class="button">Revert Selected</button>
+      <button id="resetAll" class="button">Revert All</button>
+      <button id="toggleGrid" class="button secondary">Toggle Grid</button>
+      <button id="followBtn" class="button secondary" title="Lock camera to the selected body">Follow Selected</button>
+    </div>
+
+    <div class="note">Tip: drag to orbit, scroll to zoom. Elements are J2000 mean (DE200 fit).</div>
+  </div>
+
+  <canvas id="c" data-engine="three.js r163"></canvas>
+
+  <script type="importmap">{
+    "imports": {
+      "three": "https://threejs.org/build/three.module.js",
+      "three/addons/": "https://threejs.org/examples/jsm/"
+    }
+  }</script>
+
   <script type="module">
-    
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import {MTLLoader} from 'three/addons/loaders/MTLLoader.js';
-import { GUI } from 'three/addons/libs/lil-gui.module.min.js';
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
+    // ---------- Constants & helpers ----------
+    const MU_SUN = 1.32712440018e20;    // m^3/s^2
+    const AU      = 149_597_870_700;    // m
+    const SCALE   = 50 / AU;            // 1 AU ≈ 50 scene units
+    const d2r = d => d * Math.PI / 180;
+    const wrap2pi = x => (x % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    const wrap360 = d => (d % 360 + 360) % 360;
 
-function main() {
+    // Camera follow smoothing (0..1). 1 = hard lock, 0.2 = smooth.
+    const FOLLOW_SMOOTH = 0.2;
 
-const canvas = document.querySelector( '#c' );
-const renderer = new THREE.WebGLRenderer( { antialias: true, canvas } );
-let globalKilled = false;
-const fov = 45;
-const aspect = 2; // the canvas default
-const near = 0.1;
-const far = 1000;
-const camera = new THREE.PerspectiveCamera( fov, aspect, near, far );
-camera.position.set( 0, 10, 20 );
+    // Kepler solver (elliptic)
+    function solveKepler(M, e, tol=1e-9, maxIter=32) {
+      M = wrap2pi(M);
+      let E = (e < 0.8) ? M : Math.atan2(Math.sin(M), Math.cos(M) - e);
+      for (let k=0; k<maxIter; k++) {
+        const f  = E - e*Math.sin(E) - M;
+        const fp = 1 - e*Math.cos(E);
+        const dE = -f/fp;
+        E += dE;
+        if (Math.abs(dE) < tol) break;
+      }
+      return wrap2pi(E);
+    }
 
-const controls = new OrbitControls( camera, canvas );
-controls.target.set( 0, 5, 0 );
-controls.maxDistance = 500;
-controls.update();
+    // Perifocal -> inertial (J2000 ecliptic)
+    function elementsToPosition(a, e, i, Omega, omega, M) {
+      const E = solveKepler(M, e);
+      const cosE = Math.cos(E), sinE = Math.sin(E);
+      const r = a * (1 - e*cosE);
+      const sqrt1me2 = Math.sqrt(1 - e*e);
+      const cosNu = (cosE - e) / (1 - e*cosE);
+      const sinNu = (sqrt1me2 * sinE) / (1 - e*cosE);
+      const nu = Math.atan2(sinNu, cosNu);
+      const x_p = r * Math.cos(nu);
+      const y_p = r * Math.sin(nu);
 
+      const cO=Math.cos(Omega), sO=Math.sin(Omega);
+      const ci=Math.cos(i),     si=Math.sin(i);
+      const co=Math.cos(omega), so=Math.sin(omega);
 
-let timeStep = 24;
-const timeStepSlider = document.getElementById('timeStep');
-      const timeStepValue = document.getElementById('timeStepValue');
-      timeStepSlider.addEventListener('input', (event) => {
-        timeStep = event.target.value;
-        timeStepValue.textContent = timeStep;
-      });
+      const R11 = cO*co - sO*so*ci, R12 = -cO*so - sO*co*ci, R13 = sO*si;
+      const R21 = sO*co + cO*so*ci, R22 = -sO*so + cO*co*ci, R23 = -cO*si;
+      const R31 = so*si,           R32 = co*si,            R33 = ci;
 
+      const x = R11*x_p + R12*y_p;
+      const y = R21*x_p + R22*y_p;
+      const z = R31*x_p + R32*y_p;
+      return { x, y, z };
+    }
 
-const inclinationSlider = document.getElementById('inclination');
-const inclinationValue = document.getElementById('inclinationValue');
-let inclination = 0;
-inclinationSlider.addEventListener('input', (event) => {
-    inclination = event.target.value;
-    inclinationValue.textContent = inclination;
+    // ---------- J2000 mean elements (DE200 fit) ----------
+    const meanJ2000 = {
+      Mercury: { a_AU:0.38709893, e:0.20563069, i:7.00487,  Omega:48.33167,  varpi:77.45645,  L:252.25084 },
+      Venus:   { a_AU:0.72333199, e:0.00677323, i:3.39471,  Omega:76.68069,  varpi:131.53298, L:181.97973 },
+      Earth:   { a_AU:1.00000011, e:0.01671022, i:0.00005,  Omega:-11.26064, varpi:102.94719, L:100.46435 },
+      Mars:    { a_AU:1.52366231, e:0.09341233, i:1.85061,  Omega:49.57854,  varpi:336.04084, L:355.45332 },
+      Jupiter: { a_AU:5.20336301, e:0.04839266, i:1.30530,  Omega:100.55615, varpi:14.75385,  L:34.40438 },
+      Saturn:  { a_AU:9.53707032, e:0.05415060, i:2.48446,  Omega:113.71504, varpi:92.43194,  L:49.94432 },
+      Uranus:  { a_AU:19.19126393,e:0.04716771, i:0.76986,  Omega:74.22988,  varpi:170.96424, L:313.23218 },
+      Neptune: { a_AU:30.06896348,e:0.00858587, i:1.76917,  Omega:131.72169, varpi:44.97135,  L:304.88003 },
+      Pluto:   { a_AU:39.48168677,e:0.24880766, i:17.14175, Omega:110.30347, varpi:224.06676, L:238.92881 },
+    };
+
+    function sixFromMean(e) {
+      const omegaDeg = wrap360(e.varpi - e.Omega);
+      const M0Deg    = wrap360(e.L - e.varpi);
+      return {
+        a: e.a_AU * AU,
+        e: e.e,
+        i: d2r(e.i),
+        Omega: d2r(e.Omega),
+        omega: d2r(omegaDeg),
+        M0: d2r(M0Deg),
+        epoch: Date.UTC(2000,0,1,12,0,0)/1000  // J2000.0
+      };
+    }
+    const defaultSix = {};
+    for (const k of Object.keys(meanJ2000)) defaultSix[k] = sixFromMean(meanJ2000[k]);
+
+    // ---------- Kepler body ----------
+    class KeplerBody {
+      constructor({ name, elements, texturePath, color=0xffffff, radius=1 }) {
+        this.name = name;
+        this.el = { ...elements };
+        this.n  = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3)); // rad/s
+        let material;
+        if (texturePath) {
+          const tex = new THREE.TextureLoader().load(texturePath);
+          material = new THREE.MeshStandardMaterial({ map: tex });
+        } else {
+          material = new THREE.MeshStandardMaterial({ color });
+        }
+        this.mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 48), material);
+      }
+      addTo(scene) { scene.add(this.mesh); }
+      setElements(partial) {
+        Object.assign(this.el, partial);
+        if (partial.a !== undefined) this.n = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3));
+      }
+      update(simSeconds) {
+        const { a,e,i,Omega,omega,M0,epoch } = this.el;
+        const M = wrap2pi(M0 + this.n * (simSeconds - epoch));
+        const { x, y, z } = elementsToPosition(a, e, i, Omega, omega, M);
+        // Put ecliptic plane on XZ
+        this.mesh.position.set(x*SCALE, z*SCALE, y*SCALE);
+      }
+    }
+
+    // ---------- Renderer / scene ----------
+    const canvas   = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({ antialias:true, canvas });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.01, 2_000_000);
+    camera.position.set(0, 65, 170);
+
+    const scene = new THREE.Scene();
+
+    // Starfield background
+    new THREE.TextureLoader().load('milkyway.png', (tex) => {
+      tex.mapping = THREE.EquirectangularReflectionMapping;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      scene.background = tex;
     });
 
-
-
-const scene = new THREE.Scene();
-{
-		// load skybox texture from 1 image
-		const loader = new THREE.TextureLoader();
-		const texture = loader.load(
-			'milkyway.png', () => {
-			texture.mapping = THREE.EquirectangularReflectionMapping;
-			texture.colorSpace = THREE.SRGBColorSpace;
-			scene.background = texture;
-		});
-	}
-
-
-  const size = 1000;
-      const divisions = 10;
-      const gridHelper = new THREE.GridHelper(size, divisions);
-      scene.add(gridHelper);
-
-
-
-
-  class ColorGUIHelper {
-
-constructor( object, prop ) {
-
-  this.object = object;
-  this.prop = prop;
-
-}
-get value() {
-
-  return `#${this.object[ this.prop ].getHexString()}`;
-
-}
-set value( hexString ) {
-
-  this.object[ this.prop ].set( hexString );
-
-}
-
-}
-
-function makeXYZGUI( gui, vector3, name, onChangeFn ) {
-
-const folder = gui.addFolder( name );
-folder.add( vector3, 'x', - 10, 40 ).onChange( onChangeFn );
-folder.add( vector3, 'y', 0, 40 ).onChange( onChangeFn );
-folder.add( vector3, 'z', - 10, 40 ).onChange( onChangeFn );
-folder.open();
-
-}
-
-{
-
-const color = 0xFFFFFF;
-const intensity = 10000;
-const light = new THREE.PointLight( color, intensity );
-light.position.set( 0, 0, 0 );
-scene.add( light );
-
-const helper = new THREE.PointLightHelper( light );
-scene.add( helper );
-
-function updateLight() {
-
-  helper.update();
-
-}
-
-updateLight();
-
-
-}
-{
-const light = new THREE.AmbientLight( 0x404040 ); // soft white light
-scene.add( light );
-}
-
-function frameArea( sizeToFitOnScreen, boxSize, boxCenter, camera ) {
-
-  const halfSizeToFitOnScreen = sizeToFitOnScreen * 0.5;
-  const halfFovY = THREE.MathUtils.degToRad( camera.fov * .5 );
-  const distance = halfSizeToFitOnScreen / Math.tan( halfFovY );
-  // compute a unit vector that points in the direction the camera is now
-  // in the xz plane from the center of the box
-  const direction = ( new THREE.Vector3() )
-    .subVectors( camera.position, boxCenter )
-    .multiply( new THREE.Vector3( 1, 0, 1 ) )
-    .normalize();
-
-  // move the camera to a position distance units way from the center
-  // in whatever direction the camera was from the center already
-  camera.position.copy( direction.multiplyScalar( distance ).add( boxCenter ) );
-
-  // pick some near and far values for the frustum that
-  // will contain the box.
-  camera.near = boxSize / 100;
-  camera.far = boxSize * 10000;
-
-  camera.updateProjectionMatrix();
-
-  // point the camera to look at the center of the box
-  camera.lookAt( boxCenter.x, boxCenter.y, boxCenter.z );
-
-}
-
-
-
-/*
-// sun
-{
-const SunsphereRadius = 300;
-const SunsphereWidthSegments = 32;
-const SunsphereHeightSegments = 32;
-
-const SunsphereGeo = new THREE.SphereGeometry(
-  SunsphereRadius,
-  SunsphereWidthSegments,
-  SunsphereHeightSegments
-);
-
-
-const SunsphereMat = new THREE.MeshPhongMaterial({ color: '#f2be07', emissive: '#fcba03', emissiveIntensity: 40  });
-const SunsphereMesh = new THREE.Mesh(SunsphereGeo, SunsphereMat);
-SunsphereMesh.position.set(0, 0, 0); // Set position as needed
-scene.add(SunsphereMesh);
-
-    const box = new THREE.Box3().setFromObject( SunsphereMesh );
-
-      const boxSize = box.getSize( new THREE.Vector3() ).length();
-      const boxCenter = box.getCenter( new THREE.Vector3() );
-
-      // set the camera to frame the box
-      frameArea( boxSize * 1.2, boxSize, boxCenter, camera );
-
-      // update the Trackball controls to handle the new size
-      controls.maxDistance = boxSize * 100;
-      controls.target.copy( boxCenter );
-      controls.update();
-
-		
-}
-
-
-
-// earth 
-
-{
-const earthRadius = 30;
-const earthWidthSegments = 32;
-const earthHeightSegments = 32;
-
-const earthGeo = new THREE.SphereGeometry(
-  earthRadius,
-  earthWidthSegments,
-  earthHeightSegments
-);
-
-// Load the texture
-const loader = new THREE.TextureLoader();
-const texture = loader.load('earthdaymap.jpg');
-
-const earthMat = new THREE.MeshPhongMaterial({ map: texture });
-const earthMesh = new THREE.Mesh(earthGeo, earthMat);
-earthMesh.position.set(0, 0, 900); // Set position as needed
-scene.add(earthMesh);
-	
-}
-
-*/
-
-class Planet {
-      static AU = 149.6e6 * 1000;
-      static G = 6.67428e-11;
-      static SCALE = 50 / Planet.AU;  // 1AU = 100 pixels
-      static TIMESTEP = 24;  // 1 day
-
-      constructor(x, y, radius, texturePath, mass, emissive=false) {
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.mass = mass;
-        this.isSun = false;
-        this.orbit = [];
-        this.sun = false;
-        this.distance_to_sun = 0;
-
-        this.x_vel = 0;
-        this.y_vel = 0;
-
-        // Load the texture
-        const loader = new THREE.TextureLoader();
-        const texture = loader.load(texturePath);
-
-
-        // Create the geometry and material for the planet
-        const geometry = new THREE.SphereGeometry(radius, 32, 32);
-
-        const materialOptions = { map: texture };
-
-        if (emissive) {
-          materialOptions.emissive = 0xffffff;
-          materialOptions.emissiveMap = texture;
-          materialOptions.emissiveIntensity = 1;
-          this.isSun = true;
-        }
-
-        const material = new THREE.MeshStandardMaterial(materialOptions);
-        this.mesh = new THREE.Mesh(geometry, material);
-        
-
-        // Set initial position
-        this.mesh.position.set(x * Planet.SCALE, 0, y * Planet.SCALE);
-        scene.add(this.mesh);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.maxDistance = 12_000;
+    controls.target.set(0,0,0);
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+    const sunLight = new THREE.PointLight(0xffffff, 6000, 0, 2.0);
+    sunLight.position.set(0,0,0);
+    scene.add(sunLight);
+
+    // Grid
+    const gridHelper = new THREE.GridHelper(3000, 60, 0x88aaff, 0x4466aa);
+    gridHelper.material.opacity = 0.65;
+    gridHelper.material.transparent = true;
+    gridHelper.position.y = 0;
+    scene.add(gridHelper);
+
+    // Sun
+    (function makeSun(){
+      let mat;
+      try {
+        const t = new THREE.TextureLoader().load('sunTexture.jpg');
+        mat = new THREE.MeshStandardMaterial({ emissive:0xffffff, emissiveIntensity:1.0, emissiveMap:t });
+      } catch {
+        mat = new THREE.MeshStandardMaterial({ emissive:0xffffcc, emissiveIntensity:1.0, color:0x222222 });
       }
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(5.5, 64, 64), mat);
+      sun.position.set(0,0,0);
+      scene.add(sun);
+    })();
 
-      attraction(other) {
-        const other_x = other.mesh.position.x / Planet.SCALE;
-        const other_y = other.mesh.position.z / Planet.SCALE;
-        const distance_x = other_x - this.x;
-        const distance_y = other_y - this.y;
-        const distance = Math.sqrt(distance_x ** 2 + distance_y ** 2);
+    // ---------- Bodies ----------
+    const bodyConfigs = {
+      Mercury: { texture:'mercury.jpg',     color:0xb7a28e, radius:0.40 },
+      Venus:   { texture:'venus.jpg',       color:0xe3c07a, radius:0.90 },
+      Earth:   { texture:'earthdaymap.jpg', color:0x7fc8ff, radius:1.00 },
+      Mars:    { texture:'marsMap.jpg',     color:0xff6b4a, radius:0.65 },
+      Jupiter: { texture:'jupiter.jpg',     color:0xf5d7a1, radius:3.6 },
+      Saturn:  { texture:'saturn.jpg',      color:0xf2e7c6, radius:3.1 },
+      Uranus:  { texture:'uranus.jpg',      color:0xa0e5e8, radius:2.0 },
+      Neptune: { texture:'neptune.jpg',     color:0x6fa8ff, radius:1.8 },
+      Pluto:   { texture:'pluto.jpeg',      color:0xd7c5b0, radius:0.35 },
+    };
 
-        if (other.sun) {
-          this.distance_to_sun = distance;
-        }
-
-        const force = Planet.G * this.mass * other.mass / distance ** 2;
-        const theta = Math.atan2(distance_y, distance_x);
-        const force_x = Math.cos(theta) * force;
-        const force_y = Math.sin(theta) * force;
-        return [force_x, force_y];
-      }
-
-      updatePosition(planets, time) {
-        if (this.isSun) {
-          return; // Sun stays fixed at the center
-        }
-
-        let total_fx = 0;
-        let total_fy = 0;
-
-        for (let planet of planets) {
-          if (this === planet) continue;
-
-          const [fx, fy] = this.attraction(planet);
-          total_fx += fx;
-          total_fy += fy;
-        }
-
-        let time_diff = 0;
-        if (time < 50) {
-          time_diff = Math.floor(time*100);
-        }
-
-        this.x_vel += total_fx / this.mass * timeStep * time_diff;
-        this.y_vel += total_fy / this.mass * timeStep * time_diff;
-
-        this.x += this.x_vel * timeStep * time_diff;
-        this.y += this.y_vel * timeStep * time_diff;
-
-        const inclinationRad = THREE.MathUtils.degToRad(inclination);
-          const z = this.y * Math.sin(inclinationRad);
-          const y = this.y * Math.cos(inclinationRad);
-
-        this.mesh.position.set(this.x * Planet.SCALE, z  * Planet.SCALE, y * Planet.SCALE);
-        this.orbit.push([this.x, y, z]);
-      }
-    }
-
-    // Initialize planets
-    const planets = [];
-
-    // Create the Sun
-    const sun = new Planet(0, 0, 5, 'sunTexture.jpg', 1.989e30, true);
-    sun.sun = true;
-    planets.push(sun);
-
-    // Create Earth
-    const earth = new Planet(1 * Planet.AU, 0, 1, 'earthdaymap.jpg', 5.972e24);
-    earth.y_vel = 29783; // Initial velocity in m/s
-    planets.push(earth);
-
-
-    const mars =  new Planet(1.524 * Planet.AU, 0, 0.8, 'marsMap.jpg', 6.39e23);
-    mars.y_vel = 24.077 * 1000;
-    planets.push(mars);
-    // Add more planets as needed
-
-
-    
-
-    const mercury = new Planet(0.387 * Planet.AU, 0, 0.4, 'mercury.jpg', 3.30e23);
-    mercury.y_vel = 47.4 * 1000;
-    planets.push(mercury);
-
-
-    const venus = new Planet(0.723 * Planet.AU, 0, 0.7, 'venus.jpg', 4.8685e24);
-    venus.y_vel = 35.02 * 1000;
-    planets.push(venus);
-
-    const jupiter = new Planet(5.2 * Planet.AU, 0, 2.7, 'jupiter.jpg', 1.898e27);
-    jupiter.y_vel = 13.07 * 1000;
-    planets.push(jupiter);
-
-
-
-    function animatePlanets(time) {
-      // requestAnimationFrame(animatePlanets)
-
-      // Update positions
-      for (let planet of planets) {
-        planet.updatePosition(planets, time);
-        // {
-        //   let sphereShape = new THREE.SphereGeometry(0.1, 8, 6);
-        //   let material = new THREE.MeshBasicMaterial({ color: 0xBBBBBB })
-        //   let sphere = new THREE.Mesh(sphereShape, material)
-        //   sphere.position.set(planet.orbit);
-        //   scene.add(sphere);
-        // }
-      }
-
-    }
-
-function resizeRendererToDisplaySize( renderer ) {
-
-  const canvas = renderer.domElement;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const needResize = canvas.width !== width || canvas.height !== height;
-  if ( needResize ) {
-
-    renderer.setSize( width, height, false );
-
-  }
-
-  return needResize;
-
-}
-let prev_frame_time;
-let time_diff
-function render(time) {
-  time_diff = time - prev_frame_time;
-  prev_frame_time = time;
-  if ( resizeRendererToDisplaySize( renderer ) ) {
-
-    const canvas = renderer.domElement;
-    camera.aspect = canvas.clientWidth / canvas.clientHeight;
-    camera.updateProjectionMatrix();
-
-  }
-  animatePlanets(time_diff);
-  renderer.render( scene, camera );
-
-  requestAnimationFrame( render );
-
-}
-
-requestAnimationFrame( render );
-
-
-
-
-const toggleGridButton = document.getElementById('toggleGrid');
-      toggleGridButton.addEventListener('click', () => {
-        gridHelper.visible = !gridHelper.visible;
+    const bodies = {};
+    for (const name of Object.keys(defaultSix)) {
+      const b = new KeplerBody({
+        name,
+        elements: defaultSix[name],
+        texturePath: bodyConfigs[name].texture,
+        color: bodyConfigs[name].color,
+        radius: bodyConfigs[name].radius
       });
-    
+      b.addTo(scene);
+      bodies[name] = b;
+    }
 
-}
+    // ---------- Orbits ----------
+    const orbitLines = {};
+    function buildOrbitLine(el, segments=800, color=0x88aaff) {
+      const pts = [];
+      for (let s=0; s<=segments; s++) {
+        const M = 2*Math.PI * (s/segments);
+        const { x,y,z } = elementsToPosition(el.a, el.e, el.i, el.Omega, el.omega, M);
+        pts.push(new THREE.Vector3(x*SCALE, z*SCALE, y*SCALE));
+      }
+      const geom = new THREE.BufferGeometry().setFromPoints(pts);
+      const mat  = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.85 });
+      return new THREE.Line(geom, mat);
+    }
+    const orbitColors = {
+      Mercury:0x9aa1a8, Venus:0xd1a763, Earth:0x3b82f6, Mars:0xf97316,
+      Jupiter:0xf59e0b, Saturn:0xeab308, Uranus:0x22d3ee, Neptune:0x60a5fa, Pluto:0xa78bfa
+    };
+    function rebuildOrbit(name) {
+      if (orbitLines[name]) scene.remove(orbitLines[name]);
+      orbitLines[name] = buildOrbitLine(bodies[name].el, 900, orbitColors[name]);
+      scene.add(orbitLines[name]);
+    }
+    for (const name of Object.keys(bodies)) rebuildOrbit(name);
 
-main();
-    </script>
+    // ---------- UI wiring ----------
+    const bodySelect = document.getElementById('bodySelect');
+    const aAU  = document.getElementById('aAU');
+    const ecc  = document.getElementById('ecc');
+    const inc  = document.getElementById('inc');
+    const raan = document.getElementById('raan');
+    const argp = document.getElementById('argp');
+    const M0s  = document.getElementById('M0');
 
-  
-  </body>
+    const aAUVal  = document.getElementById('aAUVal');
+    const eccVal  = document.getElementById('eccVal');
+    const incVal  = document.getElementById('incVal');
+    const raanVal = document.getElementById('raanVal');
+    const argpVal = document.getElementById('argpVal');
+    const M0Val   = document.getElementById('M0Val');
 
+    const applyNow = document.getElementById('applyNow');
+
+    function fillUIFromElements(el) {
+      aAU.value  = (el.a / AU).toFixed(3);
+      ecc.value  = el.e.toFixed(4);
+      inc.value  = (el.i * 180/Math.PI).toFixed(2);
+      raan.value = (el.Omega * 180/Math.PI).toFixed(2);
+      argp.value = (el.omega * 180/Math.PI).toFixed(2);
+      const Mdeg = (wrap2pi(el.M0) * 180/Math.PI);
+      M0s.value  = Mdeg.toFixed(2);
+
+      aAUVal.textContent  = ' ' + aAU.value;
+      eccVal.textContent  = ' ' + ecc.value;
+      incVal.textContent  = ' ' + inc.value;
+      raanVal.textContent = ' ' + raan.value;
+      argpVal.textContent = ' ' + argp.value;
+      M0Val.textContent   = ' ' + M0s.value;
+    }
+
+    function applyUIToSelected() {
+      const name = bodySelect.value;
+      const b = bodies[name];
+      const updates = {
+        a: Number(aAU.value) * AU,
+        e: Number(ecc.value),
+        i: d2r(Number(inc.value)),
+        Omega: d2r(Number(raan.value)),
+        omega: d2r(Number(argp.value)),
+        M0: d2r(Number(M0s.value)),
+      };
+      if (applyNow.checked) updates.epoch = simTime;
+      b.setElements(updates);
+      rebuildOrbit(name);
+      fillUIFromElements(b.el);
+    }
+
+    function resetSelected() {
+      const name = bodySelect.value;
+      bodies[name].setElements({ ...defaultSix[name] });
+      rebuildOrbit(name);
+      fillUIFromElements(bodies[name].el);
+    }
+    function resetAll() {
+      for (const name of Object.keys(bodies)) {
+        bodies[name].setElements({ ...defaultSix[name] });
+        rebuildOrbit(name);
+      }
+      fillUIFromElements(bodies[bodySelect.value].el);
+    }
+
+    bodySelect.addEventListener('change', () => {
+      fillUIFromElements(bodies[bodySelect.value].el);
+      // Snap camera to new target if following
+      if (followEnabled) {
+        const pos = bodies[bodySelect.value].mesh.position;
+        // keep current offset distance, but move to new body
+        const offset = camera.position.clone().sub(controls.target);
+        controls.target.copy(pos);
+        camera.position.copy(pos).add(offset);
+      }
+    });
+
+    [aAU, ecc, inc, raan, argp, M0s, applyNow].forEach(inp => inp.addEventListener('input', applyUIToSelected));
+    document.getElementById('resetSel').addEventListener('click', resetSelected);
+    document.getElementById('resetAll').addEventListener('click', resetAll);
+
+    // Minimize / restore
+    const controlsPanel = document.getElementById('controls');
+    const minBtn = document.getElementById('minBtn');
+    let minimized = false;
+    minBtn.addEventListener('click', () => {
+      minimized = !minimized;
+      controlsPanel.classList.toggle('min', minimized);
+      minBtn.textContent = minimized ? 'Expand' : 'Minimize';
+      minBtn.title = minimized ? 'Show panel' : 'Hide panel';
+    });
+
+    // Grid toggle & time
+    const timeStepSlider = document.getElementById('timeStep');
+    const timeStepValue  = document.getElementById('timeStepValue');
+    let simSecondsPerRealSecond = Number(timeStepSlider.value) * 3600;
+    timeStepSlider.addEventListener('input', (e) => {
+      simSecondsPerRealSecond = Number(e.target.value) * 3600;
+      timeStepValue.textContent = e.target.value;
+    });
+    document.getElementById('toggleGrid').addEventListener('click', () => gridHelper.visible = !gridHelper.visible);
+
+    // ---------- Follow Selected camera ----------
+    const followBtn = document.getElementById('followBtn');
+    let followEnabled = false;
+
+    followBtn.addEventListener('click', () => {
+      followEnabled = !followEnabled;
+      // lock/unlock panning while following
+      controls.enablePan = !followEnabled;
+      followBtn.textContent = followEnabled ? 'Unfollow' : 'Follow Selected';
+      followBtn.title = followEnabled ? 'Stop following selected body' : 'Lock camera to the selected body';
+
+      if (followEnabled) {
+        // snapshot current offset so we don't jump
+        const offset = camera.position.clone().sub(controls.target);
+        const pos = bodies[bodySelect.value].mesh.position;
+        controls.target.copy(pos);
+        camera.position.copy(pos).add(offset);
+      }
+    });
+
+    // ---------- Animate ----------
+    let simTime = Date.UTC(2000,0,1,12,0,0)/1000; // J2000 start
+    let lastMs;
+    const tmpVec = new THREE.Vector3();
+    const desiredCam = new THREE.Vector3();
+
+    function resizeRendererToDisplaySize(renderer) {
+      const c = renderer.domElement;
+      const w = c.clientWidth, h = c.clientHeight;
+      const need = (c.width !== w || c.height !== h);
+      if (need) renderer.setSize(w, h, false);
+      return need;
+    }
+
+    function animate(ms) {
+      if (lastMs === undefined) lastMs = ms;
+      const realDelta = (ms - lastMs)/1000;
+      lastMs = ms;
+
+      simTime += realDelta * simSecondsPerRealSecond;
+      for (const b of Object.values(bodies)) b.update(simTime);
+
+      // Follow logic: keep same offset relative to target, and move with the body
+      if (followEnabled) {
+        const body = bodies[bodySelect.value];
+        if (body) {
+          // current offset BEFORE shifting target (so zoom/orbit are preserved)
+          const currentOffset = camera.position.clone().sub(controls.target);
+          const targetPos = body.mesh.position;
+
+          // desired positions
+          tmpVec.copy(controls.target).lerp(targetPos, FOLLOW_SMOOTH);
+          desiredCam.copy(targetPos).add(currentOffset);
+          camera.position.lerp(desiredCam, FOLLOW_SMOOTH);
+          controls.target.copy(tmpVec);
+        }
+      }
+
+      if (resizeRendererToDisplaySize(renderer)) {
+        camera.aspect = renderer.domElement.clientWidth / renderer.domElement.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    requestAnimationFrame(animate);
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+    });
+
+    // Init UI with current selection
+    fillUIFromElements(bodies[bodySelect.value].el);
+  </script>
+</body>
 </html>
