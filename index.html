@@ -21,7 +21,7 @@
       background:#2563eb; border:none; border-radius:8px; box-shadow: 0 2px 0 rgba(0,0,0,0.2);
     }
     .button.secondary { background:#0ea5e9; }
-    .button.warn { background:#a855f7; } /* for N-body toggle */
+    .button.warn { background:#a855f7; }
     .button:hover { filter:brightness(0.92); }
     .kv { margin-left:6px; font-weight:600; }
     #c { width: 100%; height: 100%; display: block; }
@@ -76,9 +76,10 @@
       <button id="toggleGrid" class="button secondary">Toggle Grid</button>
       <button id="followBtn" class="button secondary" title="Lock camera to the selected body">Follow Selected</button>
       <button id="integratorBtn" class="button warn" title="Switch between Kepler (analytic) and N-body (integrated)">N-body: OFF</button>
+      <button id="clearTrails" class="button secondary" title="Clear drawn N-body trails">Clear Trails</button> <!-- *** NEW -->
     </div>
 
-    <div class="note">Kepler mode: analytic two-body. N-body mode: leapfrog integrator with Sun+planets mutual gravity.</div>
+    <div class="note">Kepler mode: analytic two-body. N-body mode: leapfrog with Sun+planets mutual gravity. Trails show N-body history; thin ellipses are the analytic reference.</div>
   </div>
 
   <canvas id="c" data-engine="three.js r163"></canvas>
@@ -95,11 +96,11 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     // ---------- Constants & helpers ----------
-    const G       = 6.67430e-11;           // m^3 kg^-1 s^-2
-    const MU_SUN  = 1.32712440018e20;      // m^3/s^2
-    const M_SUN   = 1.98847e30;            // kg
-    const AU      = 149_597_870_700;       // m
-    const SCALE   = 50 / AU;               // 1 AU ≈ 50 scene units
+    const G       = 6.67430e-11;
+    const MU_SUN  = 1.32712440018e20;
+    const M_SUN   = 1.98847e30;
+    const AU      = 149_597_870_700;
+    const SCALE   = 50 / AU;
 
     const MASS = {
       Sun:     M_SUN,
@@ -118,12 +119,15 @@
     const wrap2pi = x => (x % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
     const wrap360 = d => (d % 360 + 360) % 360;
 
-    // Camera follow smoothing (0..1). 1 = hard lock, 0.2 = smooth.
     const FOLLOW_SMOOTH = 0.2;
 
     // Integrator knobs
-    const INT_MAX_STEP_HOURS = 6;      // max integrator step size (simulation hours) per substep
-    const INT_MAX_SUBSTEPS   = 64;     // cap substeps per frame to avoid huge work
+    const INT_MAX_STEP_HOURS = 6;
+    const INT_MAX_SUBSTEPS   = 64;
+
+    // *** NEW: Trail knobs
+    const TRAIL_MAX_POINTS = 4000;     // per body
+    const TRAIL_MIN_DIST   = 0.15;     // scene units (~0.003 AU) between recorded points
 
     // Kepler solver (elliptic)
     function solveKepler(M, e, tol=1e-9, maxIter=32) {
@@ -139,22 +143,19 @@
       return wrap2pi(E);
     }
 
-    // Perifocal -> inertial (J2000 ecliptic). Returns position AND velocity in meters and m/s.
+    // Perifocal -> inertial (J2000 ecliptic). Returns position + velocity.
     function elementsToState(a, e, i, Omega, omega, M) {
       const E = solveKepler(M, e);
-
       const cosE = Math.cos(E), sinE = Math.sin(E);
       const sqrt1me2 = Math.sqrt(1 - e*e);
       const r = a * (1 - e*cosE);
-      const n = Math.sqrt(MU_SUN / (a*a*a)); // rad/s
+      const n = Math.sqrt(MU_SUN / (a*a*a));
 
-      // PQW (perifocal) coordinates
       const x_p  = a * (cosE - e);
       const y_p  = a * (sqrt1me2 * sinE);
       const vx_p = -a * n * sinE / (1 - e*cosE);
       const vy_p =  a * n * sqrt1me2 * cosE / (1 - e*cosE);
 
-      // Rotation R3(Omega) * R1(i) * R3(omega)
       const cO=Math.cos(Omega), sO=Math.sin(Omega);
       const ci=Math.cos(i),     si=Math.sin(i);
       const co=Math.cos(omega), so=Math.sin(omega);
@@ -222,7 +223,7 @@
         Omega: d2r(e.Omega),
         omega: d2r(omegaDeg),
         M0: d2r(M0Deg),
-        epoch: Date.UTC(2000,0,1,12,0,0)/1000  // J2000.0
+        epoch: Date.UTC(2000,0,1,12,0,0)/1000
       };
     }
     const defaultSix = {};
@@ -233,7 +234,7 @@
       constructor({ name, elements, texturePath, color=0xffffff, radius=1 }) {
         this.name = name;
         this.el = { ...elements };
-        this.n  = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3)); // rad/s
+        this.n  = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3));
         let material;
         if (texturePath) {
           const tex = new THREE.TextureLoader().load(texturePath);
@@ -252,8 +253,7 @@
         const { a,e,i,Omega,omega,M0,epoch } = this.el;
         const M = wrap2pi(M0 + this.n * (simSeconds - epoch));
         const { x, y, z } = elementsToPosition(a, e, i, Omega, omega, M);
-        // Put ecliptic plane on XZ
-        this.mesh.position.set(x*SCALE, z*SCALE, y*SCALE);
+        this.mesh.position.set(x*SCALE, z*SCALE, y*SCALE); // ecliptic -> XZ
       }
     }
 
@@ -336,7 +336,7 @@
       bodies[name] = b;
     }
 
-    // ---------- Orbits ----------
+    // ---------- Orbits (analytic reference) ----------
     const orbitLines = {};
     function buildOrbitLine(el, segments=800, color=0x88aaff) {
       const pts = [];
@@ -346,7 +346,7 @@
         pts.push(new THREE.Vector3(x*SCALE, z*SCALE, y*SCALE));
       }
       const geom = new THREE.BufferGeometry().setFromPoints(pts);
-      const mat  = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.85 });
+      const mat  = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.70 });
       return new THREE.Line(geom, mat);
     }
     const orbitColors = {
@@ -356,14 +356,82 @@
     function rebuildOrbit(name) {
       if (orbitLines[name]) scene.remove(orbitLines[name]);
       orbitLines[name] = buildOrbitLine(bodies[name].el, 900, orbitColors[name]);
+      orbitLines[name].renderOrder = 0;
       scene.add(orbitLines[name]);
     }
+    // Keep analytic orbits visible in both modes (reference)
     function setOrbitVisibility(vis) {
       for (const k of Object.keys(orbitLines)) {
         orbitLines[k].visible = vis;
       }
     }
     for (const name of Object.keys(bodies)) rebuildOrbit(name);
+    setOrbitVisibility(true); // *** NEW: always show reference
+
+    // ---------- Trails (N-body history) ----------  // *** NEW
+    class Trail {
+      constructor(color=0xffffff, maxPts=2000) {
+        this.maxPts = maxPts;
+        this.positions = new Float32Array(maxPts * 3);
+        this.count = 0;
+        this.last = new THREE.Vector3(1e9,1e9,1e9);
+
+        const geo = new THREE.BufferGeometry();
+        this.attr = new THREE.BufferAttribute(this.positions, 3);
+        this.attr.setUsage(THREE.DynamicDrawUsage);
+        geo.setAttribute('position', this.attr);
+        geo.setDrawRange(0, 0);
+
+        const mat = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.95 });
+        this.line = new THREE.Line(geo, mat);
+        this.line.renderOrder = 1;
+      }
+      addTo(scene) { scene.add(this.line); }
+      clear() {
+        this.count = 0;
+        this.line.geometry.setDrawRange(0, 0);
+      }
+      addPoint(v3) {
+        if (this.count === 0 || v3.distanceTo(this.last) > TRAIL_MIN_DIST) {
+          const i = Math.min(this.count, this.maxPts-1);
+          this.positions[i*3+0] = v3.x;
+          this.positions[i*3+1] = v3.y;
+          this.positions[i*3+2] = v3.z;
+          if (this.count < this.maxPts) {
+            this.count++;
+            this.line.geometry.setDrawRange(0, this.count);
+          } else {
+            // buffer full: shift left (simple & fine for 9 bodies)
+            this.positions.copyWithin(0, 3, this.maxPts*3);
+          }
+          this.attr.needsUpdate = true;
+          this.last.copy(v3);
+        }
+      }
+    }
+
+    const trails = {}; // name -> Trail
+    function initTrails() {
+      for (const name of Object.keys(trails)) {
+        scene.remove(trails[name].line);
+        delete trails[name];
+      }
+      for (const name of Object.keys(bodies)) {
+        const t = new Trail(orbitColors[name], TRAIL_MAX_POINTS);
+        t.addTo(scene);
+        trails[name] = t;
+        // seed with current position
+        t.addPoint(bodies[name].mesh.position);
+      }
+    }
+    function clearAllTrails() {
+      for (const name of Object.keys(trails)) trails[name].clear();
+      // reseed with current positions so lines start from here
+      for (const name of Object.keys(bodies)) {
+        if (trails[name]) trails[name].addPoint(bodies[name].mesh.position);
+      }
+    }
+    document.getElementById('clearTrails').addEventListener('click', clearAllTrails); // *** NEW
 
     // ---------- UI wiring ----------
     const bodySelect = document.getElementById('bodySelect');
@@ -416,8 +484,10 @@
       rebuildOrbit(name);
       fillUIFromElements(b.el);
 
-      // If we are in N-body mode, reseed the integrator with the new elements
-      if (nbodyEnabled) initIntegratorFromKepler();
+      if (nbodyEnabled) {
+        initIntegratorFromKepler();
+        clearAllTrails(); // *** NEW: keep trail from new initial condition
+      }
     }
 
     function resetSelected() {
@@ -425,7 +495,7 @@
       bodies[name].setElements({ ...defaultSix[name] });
       rebuildOrbit(name);
       fillUIFromElements(bodies[name].el);
-      if (nbodyEnabled) initIntegratorFromKepler();
+      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); }
     }
     function resetAll() {
       for (const name of Object.keys(bodies)) {
@@ -433,12 +503,11 @@
         rebuildOrbit(name);
       }
       fillUIFromElements(bodies[bodySelect.value].el);
-      if (nbodyEnabled) initIntegratorFromKepler();
+      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); }
     }
 
     bodySelect.addEventListener('change', () => {
       fillUIFromElements(bodies[bodySelect.value].el);
-      // Snap camera to new target if following
       if (followEnabled) {
         const pos = bodies[bodySelect.value].mesh.position;
         const offset = camera.position.clone().sub(controls.target);
@@ -494,15 +563,13 @@
     let nbodyEnabled = false;
     const integratorBtn = document.getElementById('integratorBtn');
 
-    // State: { name: { pos:THREE.Vector3, vel:THREE.Vector3, mass:number } }
-    let nbState = {};
+    let nbState = {}; // name -> {pos, vel, mass}
 
     function initIntegratorFromKepler() {
       const names = Object.keys(bodies);
-      const rH = {}; // heliocentric pos (SI)
-      const vH = {}; // heliocentric vel (SI)
+      const rH = {};
+      const vH = {};
 
-      // Positions/velocities from elements at current sim time (heliocentric)
       for (const name of names) {
         const el = bodies[name].el;
         const dt = simTime - el.epoch;
@@ -513,19 +580,17 @@
         vH[name] = new THREE.Vector3(st.vx, st.vy, st.vz);
       }
 
-      // Barycentric shift so total momentum and barycenter are ~0
       let sum_m   = M_SUN;
-      const sum_m_r = new THREE.Vector3(); // Σ m_i r_i^h
-      const sum_m_v = new THREE.Vector3(); // Σ m_i v_i^h
+      const sum_m_r = new THREE.Vector3();
+      const sum_m_v = new THREE.Vector3();
       for (const name of names) {
         sum_m   += MASS[name];
         sum_m_r.add(rH[name].clone().multiplyScalar(MASS[name]));
         sum_m_v.add(vH[name].clone().multiplyScalar(MASS[name]));
       }
-      const R_sun = sum_m_r.clone().multiplyScalar(-1 / sum_m); // Sun position
-      const V_sun = sum_m_v.clone().multiplyScalar(-1 / sum_m); // Sun velocity
+      const R_sun = sum_m_r.clone().multiplyScalar(-1 / sum_m);
+      const V_sun = sum_m_v.clone().multiplyScalar(-1 / sum_m);
 
-      // Build nbState (barycentric)
       nbState = {};
       nbState['Sun'] = { pos: R_sun, vel: V_sun, mass: M_SUN };
       for (const name of names) {
@@ -536,7 +601,7 @@
         };
       }
 
-      // Place meshes to the new barycentric positions for visual continuity
+      // sync meshes to barycentric state
       sunMesh.position.set(nbState['Sun'].pos.x*SCALE, nbState['Sun'].pos.z*SCALE, nbState['Sun'].pos.y*SCALE);
       for (const name of names) {
         const p = nbState[name].pos;
@@ -549,7 +614,6 @@
       const acc = {};
       for (const n of names) acc[n] = new THREE.Vector3(0,0,0);
 
-      // pairwise interactions
       for (let i=0; i<names.length; i++) {
         for (let j=i+1; j<names.length; j++) {
           const ni = names[i], nj = names[j];
@@ -558,10 +622,8 @@
           const distSq = rij.lengthSq();
           const dist = Math.sqrt(distSq) || 1e-9;
           const invDist3 = 1.0 / (distSq * dist);
-
           const f_i = rij.clone().multiplyScalar(G * state[nj].mass * invDist3);
           const f_j = rij.clone().multiplyScalar(-G * state[ni].mass * invDist3);
-
           acc[ni].add(f_i);
           acc[nj].add(f_j);
         }
@@ -570,20 +632,11 @@
     }
 
     function leapfrogStep(state, h) {
-      // half kick
       let a = computeAccelerations(state);
-      for (const name of Object.keys(state)) {
-        state[name].vel.addScaledVector(a[name], h*0.5);
-      }
-      // drift
-      for (const name of Object.keys(state)) {
-        state[name].pos.addScaledVector(state[name].vel, h);
-      }
-      // half kick
+      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h*0.5);
+      for (const name of Object.keys(state)) state[name].pos.addScaledVector(state[name].vel, h);
       a = computeAccelerations(state);
-      for (const name of Object.keys(state)) {
-        state[name].vel.addScaledVector(a[name], h*0.5);
-      }
+      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h*0.5);
     }
 
     function stepNBody(dtSimSeconds) {
@@ -608,9 +661,13 @@
       nbodyEnabled = !nbodyEnabled;
       integratorBtn.textContent = 'N-body: ' + (nbodyEnabled ? 'ON' : 'OFF');
       integratorBtn.title = nbodyEnabled ? 'Currently integrating mutual gravity' : 'Currently using analytic Kepler motion';
-      setOrbitVisibility(!nbodyEnabled);
+
+      // Keep analytic orbits visible as reference
+      setOrbitVisibility(true);
+
       if (nbodyEnabled) {
         initIntegratorFromKepler();
+        initTrails();         // *** NEW: start capturing N-body paths
       }
     });
 
@@ -638,6 +695,10 @@
 
       if (nbodyEnabled) {
         stepNBody(dtSim);
+        // *** NEW: record trail points after state update
+        for (const name of Object.keys(bodies)) {
+          trails[name]?.addPoint(bodies[name].mesh.position);
+        }
       } else {
         for (const b of Object.values(bodies)) b.update(simTime);
       }
