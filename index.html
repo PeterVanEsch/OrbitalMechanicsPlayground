@@ -1,34 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8" />
   <title>Solar System (Kepler Elements) — All Planets + Pluto</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <style>
-    html, body { margin:0; height:100%; background:#000; color:#111; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial; }
+    html,
+    body {
+      margin: 0;
+      height: 100%;
+      background: #000;
+      color: #111;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Arial;
+    }
+
     #controls {
-      position: absolute; top: 10px; left: 10px; z-index: 100;
-      background: rgba(255,255,255,0.90); padding: 10px 12px; border-radius: 10px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35); width: 300px;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.90);
+      padding: 10px 12px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      width: 300px;
     }
-    #controls.min { height: 42px; overflow: hidden; }
-    #controls header { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
-    #controls label { font-weight: 600; font-size: 13px; }
-    #controls input[type="range"] { width: 210px; vertical-align: middle; }
-    .row { margin:4px 0; }
+
+    #controls.min {
+      height: 42px;
+      overflow: hidden;
+    }
+
+    #controls header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    #controls label {
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    #controls input[type="range"] {
+      width: 210px;
+      vertical-align: middle;
+    }
+
+    .row {
+      margin: 4px 0;
+    }
+
     .button {
-      display:inline-block; padding:8px 12px; font-size:13px; cursor:pointer; color:#fff;
-      background:#2563eb; border:none; border-radius:8px; box-shadow: 0 2px 0 rgba(0,0,0,0.2);
+      display: inline-block;
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #fff;
+      background: #2563eb;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
     }
-    .button.secondary { background:#0ea5e9; }
-    .button.warn { background:#a855f7; }
-    .button:hover { filter:brightness(0.92); }
-    .kv { margin-left:6px; font-weight:600; }
-    #c { width: 100%; height: 100%; display: block; }
-    .note { margin-top:6px; font-size: 12px; color:#333; }
-    hr { margin:8px 0; border:none; border-top:1px solid #ddd; }
+
+    .button.secondary {
+      background: #0ea5e9;
+    }
+
+    .button.warn {
+      background: #a855f7;
+    }
+
+    .button:hover {
+      filter: brightness(0.92);
+    }
+
+    .kv {
+      margin-left: 6px;
+      font-weight: 600;
+    }
+
+    #c {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .note {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #333;
+    }
+
+    hr {
+      margin: 8px 0;
+      border: none;
+      border-top: 1px solid #ddd;
+    }
+
+    /* Simple alert/toast panel */
+    #alerts {
+      position: absolute;
+      right: 10px;
+      top: 10px;
+      z-index: 120;
+      width: 280px;
+      max-height: 50vh;
+      overflow: auto;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .alert {
+      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 8px;
+      padding: 8px;
+      margin: 6px 0;
+    }
+
+    .alert time {
+      opacity: 0.75;
+      font-size: 12px;
+    }
   </style>
 </head>
+
 <body>
   <div id="controls" class="">
     <header>
@@ -53,12 +157,18 @@
       </select>
     </div>
 
-    <div class="row"><label>a (AU)</label> <input type="range" id="aAU" min="0.2" max="45" step="0.001"><span id="aAUVal" class="kv"></span></div>
-    <div class="row"><label>e</label>      <input type="range" id="ecc" min="0" max="0.3" step="0.0001"><span id="eccVal" class="kv"></span></div>
-    <div class="row"><label>i (deg)</label><input type="range" id="inc" min="0" max="40" step="0.01"><span id="incVal" class="kv"></span></div>
-    <div class="row"><label>Ω (deg)</label><input type="range" id="raan" min="-180" max="360" step="0.01"><span id="raanVal" class="kv"></span></div>
-    <div class="row"><label>ω (deg)</label><input type="range" id="argp" min="-180" max="360" step="0.01"><span id="argpVal" class="kv"></span></div>
-    <div class="row"><label>M₀ (deg)</label><input type="range" id="M0" min="0" max="360" step="0.01"><span id="M0Val" class="kv"></span></div>
+    <div class="row"><label>a (AU)</label> <input type="range" id="aAU" min="0.2" max="45" step="0.001"><span
+        id="aAUVal" class="kv"></span></div>
+    <div class="row"><label>e</label> <input type="range" id="ecc" min="0" max="0.7" step="0.0001"><span id="eccVal"
+        class="kv"></span></div>
+    <div class="row"><label>i (deg)</label><input type="range" id="inc" min="0" max="360" step="0.01"><span id="incVal"
+        class="kv"></span></div>
+    <div class="row"><label>Ω (deg)</label><input type="range" id="raan" min="-180" max="360" step="0.01"><span
+        id="raanVal" class="kv"></span></div>
+    <div class="row"><label>ω (deg)</label><input type="range" id="argp" min="-180" max="360" step="0.01"><span
+        id="argpVal" class="kv"></span></div>
+    <div class="row"><label>M₀ (deg)</label><input type="range" id="M0" min="0" max="360" step="0.01"><span id="M0Val"
+        class="kv"></span></div>
 
     <div class="row" style="margin-top:6px;">
       <label><input type="checkbox" id="applyNow" checked> Apply at now (reset epoch)</label>
@@ -75,12 +185,19 @@
       <button id="resetAll" class="button">Revert All</button>
       <button id="toggleGrid" class="button secondary">Toggle Grid</button>
       <button id="followBtn" class="button secondary" title="Lock camera to the selected body">Follow Selected</button>
-      <button id="integratorBtn" class="button warn" title="Switch between Kepler (analytic) and N-body (integrated)">N-body: OFF</button>
-      <button id="clearTrails" class="button secondary" title="Clear drawn N-body trails">Clear Trails</button> <!-- *** NEW -->
+      <button id="integratorBtn" class="button warn"
+        title="Switch between Kepler (analytic) and N-body (integrated)">N-body: OFF</button>
+      <button id="clearTrails" class="button secondary" title="Clear drawn N-body trails">Clear Trails</button>
     </div>
 
-    <div class="note">Kepler mode: analytic two-body. N-body mode: leapfrog with Sun+planets mutual gravity. Trails show N-body history; thin ellipses are the analytic reference.</div>
+    <div class="note">
+      Kepler mode: analytic two-body. N-body mode: leapfrog with Sun+planets mutual gravity.
+      Trails show N-body history; thin ellipses are the analytic reference.
+    </div>
   </div>
+
+  <!-- Alerts panel -->
+  <div id="alerts"><strong>Alerts</strong></div>
 
   <canvas id="c" data-engine="three.js r163"></canvas>
 
@@ -96,47 +213,64 @@
     import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
     // ---------- Constants & helpers ----------
-    const G       = 6.67430e-11;
-    const MU_SUN  = 1.32712440018e20;
-    const M_SUN   = 1.98847e30;
-    const AU      = 149_597_870_700;
-    const SCALE   = 50 / AU;
+    const G = 6.67430e-11;
+    const MU_SUN = 1.32712440018e20;
+    const M_SUN = 1.98847e30;
+    const AU = 149_597_870_700;
+    const SCALE = 50 / AU;
 
     const MASS = {
-      Sun:     M_SUN,
+      Sun: M_SUN,
       Mercury: 3.3011e23,
-      Venus:   4.8675e24,
-      Earth:   5.97237e24,
-      Mars:    6.4171e23,
+      Venus: 4.8675e24,
+      Earth: 5.97237e24,
+      Mars: 6.4171e23,
       Jupiter: 1.8982e27,
-      Saturn:  5.6834e26,
-      Uranus:  8.6810e25,
+      Saturn: 5.6834e26,
+      Uranus: 8.6810e25,
       Neptune: 1.02413e26,
-      Pluto:   1.303e22
+      Pluto: 1.303e22
     };
 
+    // Planetary equatorial radii (km) — approximate
+    const RADIUS_KM = {
+      Sun: 695700,
+      Mercury: 2439.7,
+      Venus: 6051.8,
+      Earth: 6378.1,
+      Mars: 3396.2,
+      Jupiter: 71492,
+      Saturn: 60268,
+      Uranus: 25559,
+      Neptune: 24764,
+      Pluto: 1188.3
+    };
+    // Convert to meters once
+    const RADIUS_M = Object.fromEntries(Object.entries(RADIUS_KM).map(([k, v]) => [k, v * 1000]));
+
     const d2r = d => d * Math.PI / 180;
-    const wrap2pi = x => (x % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+    const wrap2pi = x => (x % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
     const wrap360 = d => (d % 360 + 360) % 360;
 
     const FOLLOW_SMOOTH = 0.2;
 
     // Integrator knobs
     const INT_MAX_STEP_HOURS = 6;
-    const INT_MAX_SUBSTEPS   = 64;
+    const INT_MAX_SUBSTEPS = 64;
 
-    // *** NEW: Trail knobs
-    const TRAIL_MAX_POINTS = 4000;     // per body
-    const TRAIL_MIN_DIST   = 0.15;     // scene units (~0.003 AU) between recorded points
+    // Trails
+    const TRAIL_MAX_POINTS = 4000;
+    const TRAIL_MIN_DIST = 0.15; // scene units
+
 
     // Kepler solver (elliptic)
-    function solveKepler(M, e, tol=1e-9, maxIter=32) {
+    function solveKepler(M, e, tol = 1e-9, maxIter = 32) {
       M = wrap2pi(M);
       let E = (e < 0.8) ? M : Math.atan2(Math.sin(M), Math.cos(M) - e);
-      for (let k=0; k<maxIter; k++) {
-        const f  = E - e*Math.sin(E) - M;
-        const fp = 1 - e*Math.cos(E);
-        const dE = -f/fp;
+      for (let k = 0; k < maxIter; k++) {
+        const f = E - e * Math.sin(E) - M;
+        const fp = 1 - e * Math.cos(E);
+        const dE = -f / fp;
         E += dE;
         if (Math.abs(dE) < tol) break;
       }
@@ -147,30 +281,30 @@
     function elementsToState(a, e, i, Omega, omega, M) {
       const E = solveKepler(M, e);
       const cosE = Math.cos(E), sinE = Math.sin(E);
-      const sqrt1me2 = Math.sqrt(1 - e*e);
-      const r = a * (1 - e*cosE);
-      const n = Math.sqrt(MU_SUN / (a*a*a));
+      const sqrt1me2 = Math.sqrt(1 - e * e);
+      const r = a * (1 - e * cosE);
+      const n = Math.sqrt(MU_SUN / (a * a * a));
 
-      const x_p  = a * (cosE - e);
-      const y_p  = a * (sqrt1me2 * sinE);
-      const vx_p = -a * n * sinE / (1 - e*cosE);
-      const vy_p =  a * n * sqrt1me2 * cosE / (1 - e*cosE);
+      const x_p = a * (cosE - e);
+      const y_p = a * (sqrt1me2 * sinE);
+      const vx_p = -a * n * sinE / (1 - e * cosE);
+      const vy_p = a * n * sqrt1me2 * cosE / (1 - e * cosE);
 
-      const cO=Math.cos(Omega), sO=Math.sin(Omega);
-      const ci=Math.cos(i),     si=Math.sin(i);
-      const co=Math.cos(omega), so=Math.sin(omega);
+      const cO = Math.cos(Omega), sO = Math.sin(Omega);
+      const ci = Math.cos(i), si = Math.sin(i);
+      const co = Math.cos(omega), so = Math.sin(omega);
 
-      const R11 =  cO*co - sO*so*ci, R12 = -cO*so - sO*co*ci, R13 =  sO*si;
-      const R21 =  sO*co + cO*so*ci, R22 = -sO*so + cO*co*ci, R23 = -cO*si;
-      const R31 =            so*si,  R32 =             co*si, R33 =     ci;
+      const R11 = cO * co - sO * so * ci, R12 = -cO * so - sO * co * ci, R13 = sO * si;
+      const R21 = sO * co + cO * so * ci, R22 = -sO * so + cO * co * ci, R23 = -cO * si;
+      const R31 = so * si, R32 = co * si, R33 = ci;
 
-      const x  = R11*x_p  + R12*y_p;
-      const y  = R21*x_p  + R22*y_p;
-      const z  = R31*x_p  + R32*y_p;
+      const x = R11 * x_p + R12 * y_p;
+      const y = R21 * x_p + R22 * y_p;
+      const z = R31 * x_p + R32 * y_p;
 
-      const vx = R11*vx_p + R12*vy_p;
-      const vy = R21*vx_p + R22*vy_p;
-      const vz = R31*vx_p + R32*vy_p;
+      const vx = R11 * vx_p + R12 * vy_p;
+      const vy = R21 * vx_p + R22 * vy_p;
+      const vz = R31 * vx_p + R32 * vy_p;
 
       return { x, y, z, vx, vy, vz, r };
     }
@@ -178,44 +312,44 @@
     function elementsToPosition(a, e, i, Omega, omega, M) {
       const E = solveKepler(M, e);
       const cosE = Math.cos(E), sinE = Math.sin(E);
-      const r = a * (1 - e*cosE);
-      const sqrt1me2 = Math.sqrt(1 - e*e);
-      const cosNu = (cosE - e) / (1 - e*cosE);
-      const sinNu = (sqrt1me2 * sinE) / (1 - e*cosE);
+      const r = a * (1 - e * cosE);
+      const sqrt1me2 = Math.sqrt(1 - e * e);
+      const cosNu = (cosE - e) / (1 - e * cosE);
+      const sinNu = (sqrt1me2 * sinE) / (1 - e * cosE);
       const nu = Math.atan2(sinNu, cosNu);
       const x_p = r * Math.cos(nu);
       const y_p = r * Math.sin(nu);
 
-      const cO=Math.cos(Omega), sO=Math.sin(Omega);
-      const ci=Math.cos(i),     si=Math.sin(i);
-      const co=Math.cos(omega), so=Math.sin(omega);
+      const cO = Math.cos(Omega), sO = Math.sin(Omega);
+      const ci = Math.cos(i), si = Math.sin(i);
+      const co = Math.cos(omega), so = Math.sin(omega);
 
-      const R11 = cO*co - sO*so*ci, R12 = -cO*so - sO*co*ci, R13 = sO*si;
-      const R21 = sO*co + cO*so*ci, R22 = -sO*so + cO*co*ci, R23 = -cO*si;
-      const R31 = so*si,           R32 = co*si,            R33 = ci;
+      const R11 = cO * co - sO * so * ci, R12 = -cO * so - sO * co * ci, R13 = sO * si;
+      const R21 = sO * co + cO * so * ci, R22 = -sO * so + cO * co * ci, R23 = -cO * si;
+      const R31 = so * si, R32 = co * si, R33 = ci;
 
-      const x = R11*x_p + R12*y_p;
-      const y = R21*x_p + R22*y_p;
-      const z = R31*x_p + R32*y_p;
+      const x = R11 * x_p + R12 * y_p;
+      const y = R21 * x_p + R22 * y_p;
+      const z = R31 * x_p + R32 * y_p;
       return { x, y, z };
     }
 
     // ---------- J2000 mean elements (DE200 fit) ----------
     const meanJ2000 = {
-      Mercury: { a_AU:0.38709893, e:0.20563069, i:7.00487,  Omega:48.33167,  varpi:77.45645,  L:252.25084 },
-      Venus:   { a_AU:0.72333199, e:0.00677323, i:3.39471,  Omega:76.68069,  varpi:131.53298, L:181.97973 },
-      Earth:   { a_AU:1.00000011, e:0.01671022, i:0.00005,  Omega:-11.26064, varpi:102.94719, L:100.46435 },
-      Mars:    { a_AU:1.52366231, e:0.09341233, i:1.85061,  Omega:49.57854,  varpi:336.04084, L:355.45332 },
-      Jupiter: { a_AU:5.20336301, e:0.04839266, i:1.30530,  Omega:100.55615, varpi:14.75385,  L:34.40438 },
-      Saturn:  { a_AU:9.53707032, e:0.05415060, i:2.48446,  Omega:113.71504, varpi:92.43194,  L:49.94432 },
-      Uranus:  { a_AU:19.19126393,e:0.04716771, i:0.76986,  Omega:74.22988,  varpi:170.96424, L:313.23218 },
-      Neptune: { a_AU:30.06896348,e:0.00858587, i:1.76917,  Omega:131.72169, varpi:44.97135,  L:304.88003 },
-      Pluto:   { a_AU:39.48168677,e:0.24880766, i:17.14175, Omega:110.30347, varpi:224.06676, L:238.92881 },
+      Mercury: { a_AU: 0.38709893, e: 0.20563069, i: 7.00487, Omega: 48.33167, varpi: 77.45645, L: 252.25084 },
+      Venus: { a_AU: 0.72333199, e: 0.00677323, i: 3.39471, Omega: 76.68069, varpi: 131.53298, L: 181.97973 },
+      Earth: { a_AU: 1.00000011, e: 0.01671022, i: 0.00005, Omega: -11.26064, varpi: 102.94719, L: 100.46435 },
+      Mars: { a_AU: 1.52366231, e: 0.09341233, i: 1.85061, Omega: 49.57854, varpi: 336.04084, L: 355.45332 },
+      Jupiter: { a_AU: 5.20336301, e: 0.04839266, i: 1.30530, Omega: 100.55615, varpi: 14.75385, L: 34.40438 },
+      Saturn: { a_AU: 9.53707032, e: 0.05415060, i: 2.48446, Omega: 113.71504, varpi: 92.43194, L: 49.94432 },
+      Uranus: { a_AU: 19.19126393, e: 0.04716771, i: 0.76986, Omega: 74.22988, varpi: 170.96424, L: 313.23218 },
+      Neptune: { a_AU: 30.06896348, e: 0.00858587, i: 1.76917, Omega: 131.72169, varpi: 44.97135, L: 304.88003 },
+      Pluto: { a_AU: 39.48168677, e: 0.24880766, i: 17.14175, Omega: 110.30347, varpi: 224.06676, L: 238.92881 },
     };
 
     function sixFromMean(e) {
       const omegaDeg = wrap360(e.varpi - e.Omega);
-      const M0Deg    = wrap360(e.L - e.varpi);
+      const M0Deg = wrap360(e.L - e.varpi);
       return {
         a: e.a_AU * AU,
         e: e.e,
@@ -223,7 +357,7 @@
         Omega: d2r(e.Omega),
         omega: d2r(omegaDeg),
         M0: d2r(M0Deg),
-        epoch: Date.UTC(2000,0,1,12,0,0)/1000
+        epoch: Date.UTC(2000, 0, 1, 12, 0, 0) / 1000
       };
     }
     const defaultSix = {};
@@ -231,10 +365,10 @@
 
     // ---------- Kepler body ----------
     class KeplerBody {
-      constructor({ name, elements, texturePath, color=0xffffff, radius=1 }) {
+      constructor({ name, elements, texturePath, color = 0xffffff, radius = 1 }) {
         this.name = name;
         this.el = { ...elements };
-        this.n  = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3));
+        this.n = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3));
         let material;
         if (texturePath) {
           const tex = new THREE.TextureLoader().load(texturePath);
@@ -250,21 +384,21 @@
         if (partial.a !== undefined) this.n = Math.sqrt(MU_SUN / Math.pow(this.el.a, 3));
       }
       update(simSeconds) {
-        const { a,e,i,Omega,omega,M0,epoch } = this.el;
+        const { a, e, i, Omega, omega, M0, epoch } = this.el;
         const M = wrap2pi(M0 + this.n * (simSeconds - epoch));
         const { x, y, z } = elementsToPosition(a, e, i, Omega, omega, M);
-        this.mesh.position.set(x*SCALE, z*SCALE, y*SCALE); // ecliptic -> XZ
+        this.mesh.position.set(x * SCALE, z * SCALE, y * SCALE); // ecliptic -> XZ
       }
     }
 
     // ---------- Renderer / scene ----------
-    const canvas   = document.querySelector('#c');
-    const renderer = new THREE.WebGLRenderer({ antialias:true, canvas });
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({ antialias: true, canvas });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.01, 2_000_000);
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 2_000_000);
     camera.position.set(0, 65, 170);
 
     const scene = new THREE.Scene();
@@ -280,12 +414,12 @@
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.maxDistance = 12_000;
-    controls.target.set(0,0,0);
+    controls.target.set(0, 0, 0);
 
     // Lights
     scene.add(new THREE.AmbientLight(0xffffff, 0.6));
     const sunLight = new THREE.PointLight(0xffffff, 6000, 0, 2.0);
-    sunLight.position.set(0,0,0);
+    sunLight.position.set(0, 0, 0);
     scene.add(sunLight);
 
     // Grid
@@ -297,30 +431,30 @@
 
     // Sun (mesh reference saved)
     let sunMesh;
-    (function makeSun(){
+    (function makeSun() {
       let mat;
       try {
         const t = new THREE.TextureLoader().load('sunTexture.jpg');
-        mat = new THREE.MeshStandardMaterial({ emissive:0xffffff, emissiveIntensity:1.0, emissiveMap:t });
+        mat = new THREE.MeshStandardMaterial({ emissive: 0xffffff, emissiveIntensity: 1.0, emissiveMap: t });
       } catch {
-        mat = new THREE.MeshStandardMaterial({ emissive:0xffffcc, emissiveIntensity:1.0, color:0x222222 });
+        mat = new THREE.MeshStandardMaterial({ emissive: 0xffffcc, emissiveIntensity: 1.0, color: 0x222222 });
       }
       sunMesh = new THREE.Mesh(new THREE.SphereGeometry(5.5, 64, 64), mat);
-      sunMesh.position.set(0,0,0);
+      sunMesh.position.set(0, 0, 0);
       scene.add(sunMesh);
     })();
 
     // ---------- Bodies ----------
     const bodyConfigs = {
-      Mercury: { texture:'mercury.jpg',     color:0xb7a28e, radius:0.40 },
-      Venus:   { texture:'venus.jpg',       color:0xe3c07a, radius:0.90 },
-      Earth:   { texture:'earthdaymap.jpg', color:0x7fc8ff, radius:1.00 },
-      Mars:    { texture:'marsMap.jpg',     color:0xff6b4a, radius:0.65 },
-      Jupiter: { texture:'jupiter.jpg',     color:0xf5d7a1, radius:3.6 },
-      Saturn:  { texture:'saturn.jpg',      color:0xf2e7c6, radius:3.1 },
-      Uranus:  { texture:'uranus.jpg',      color:0xa0e5e8, radius:2.0 },
-      Neptune: { texture:'neptune.jpg',     color:0x6fa8ff, radius:1.8 },
-      Pluto:   { texture:'pluto.jpeg',      color:0xd7c5b0, radius:0.35 },
+      Mercury: { texture: 'mercury.jpg', color: 0xb7a28e, radius: 0.40 },
+      Venus: { texture: 'venus.jpg', color: 0xe3c07a, radius: 0.90 },
+      Earth: { texture: 'earthdaymap.jpg', color: 0x7fc8ff, radius: 1.00 },
+      Mars: { texture: 'marsMap.jpg', color: 0xff6b4a, radius: 0.65 },
+      Jupiter: { texture: 'jupiter.jpg', color: 0xf5d7a1, radius: 3.6 },
+      Saturn: { texture: 'saturn.jpg', color: 0xf2e7c6, radius: 3.1 },
+      Uranus: { texture: 'uranus.jpg', color: 0xa0e5e8, radius: 2.0 },
+      Neptune: { texture: 'neptune.jpg', color: 0x6fa8ff, radius: 1.8 },
+      Pluto: { texture: 'pluto.jpeg', color: 0xd7c5b0, radius: 0.35 },
     };
 
     const bodies = {};
@@ -338,20 +472,20 @@
 
     // ---------- Orbits (analytic reference) ----------
     const orbitLines = {};
-    function buildOrbitLine(el, segments=800, color=0x88aaff) {
+    function buildOrbitLine(el, segments = 800, color = 0x88aaff) {
       const pts = [];
-      for (let s=0; s<=segments; s++) {
-        const M = 2*Math.PI * (s/segments);
-        const { x,y,z } = elementsToPosition(el.a, el.e, el.i, el.Omega, el.omega, M);
-        pts.push(new THREE.Vector3(x*SCALE, z*SCALE, y*SCALE));
+      for (let s = 0; s <= segments; s++) {
+        const M = 2 * Math.PI * (s / segments);
+        const { x, y, z } = elementsToPosition(el.a, el.e, el.i, el.Omega, el.omega, M);
+        pts.push(new THREE.Vector3(x * SCALE, z * SCALE, y * SCALE));
       }
       const geom = new THREE.BufferGeometry().setFromPoints(pts);
-      const mat  = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.70 });
+      const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.70 });
       return new THREE.Line(geom, mat);
     }
     const orbitColors = {
-      Mercury:0x9aa1a8, Venus:0xd1a763, Earth:0x3b82f6, Mars:0xf97316,
-      Jupiter:0xf59e0b, Saturn:0xeab308, Uranus:0x22d3ee, Neptune:0x60a5fa, Pluto:0xa78bfa
+      Mercury: 0x9aa1a8, Venus: 0xd1a763, Earth: 0x3b82f6, Mars: 0xf97316,
+      Jupiter: 0xf59e0b, Saturn: 0xeab308, Uranus: 0x22d3ee, Neptune: 0x60a5fa, Pluto: 0xa78bfa
     };
     function rebuildOrbit(name) {
       if (orbitLines[name]) scene.remove(orbitLines[name]);
@@ -359,22 +493,21 @@
       orbitLines[name].renderOrder = 0;
       scene.add(orbitLines[name]);
     }
-    // Keep analytic orbits visible in both modes (reference)
     function setOrbitVisibility(vis) {
       for (const k of Object.keys(orbitLines)) {
         orbitLines[k].visible = vis;
       }
     }
     for (const name of Object.keys(bodies)) rebuildOrbit(name);
-    setOrbitVisibility(true); // *** NEW: always show reference
+    setOrbitVisibility(true);
 
-    // ---------- Trails (N-body history) ----------  // *** NEW
+    // ---------- Trails (N-body history) ----------
     class Trail {
-      constructor(color=0xffffff, maxPts=2000) {
+      constructor(color = 0xffffff, maxPts = 2000) {
         this.maxPts = maxPts;
         this.positions = new Float32Array(maxPts * 3);
         this.count = 0;
-        this.last = new THREE.Vector3(1e9,1e9,1e9);
+        this.last = new THREE.Vector3(1e9, 1e9, 1e9);
 
         const geo = new THREE.BufferGeometry();
         this.attr = new THREE.BufferAttribute(this.positions, 3);
@@ -382,7 +515,7 @@
         geo.setAttribute('position', this.attr);
         geo.setDrawRange(0, 0);
 
-        const mat = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.95 });
+        const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.95 });
         this.line = new THREE.Line(geo, mat);
         this.line.renderOrder = 1;
       }
@@ -393,16 +526,15 @@
       }
       addPoint(v3) {
         if (this.count === 0 || v3.distanceTo(this.last) > TRAIL_MIN_DIST) {
-          const i = Math.min(this.count, this.maxPts-1);
-          this.positions[i*3+0] = v3.x;
-          this.positions[i*3+1] = v3.y;
-          this.positions[i*3+2] = v3.z;
+          const i = Math.min(this.count, this.maxPts - 1);
+          this.positions[i * 3 + 0] = v3.x;
+          this.positions[i * 3 + 1] = v3.y;
+          this.positions[i * 3 + 2] = v3.z;
           if (this.count < this.maxPts) {
             this.count++;
             this.line.geometry.setDrawRange(0, this.count);
           } else {
-            // buffer full: shift left (simple & fine for 9 bodies)
-            this.positions.copyWithin(0, 3, this.maxPts*3);
+            this.positions.copyWithin(0, 3, this.maxPts * 3);
           }
           this.attr.needsUpdate = true;
           this.last.copy(v3);
@@ -410,7 +542,7 @@
       }
     }
 
-    const trails = {}; // name -> Trail
+    const trails = {};
     function initTrails() {
       for (const name of Object.keys(trails)) {
         scene.remove(trails[name].line);
@@ -420,52 +552,93 @@
         const t = new Trail(orbitColors[name], TRAIL_MAX_POINTS);
         t.addTo(scene);
         trails[name] = t;
-        // seed with current position
         t.addPoint(bodies[name].mesh.position);
       }
     }
     function clearAllTrails() {
       for (const name of Object.keys(trails)) trails[name].clear();
-      // reseed with current positions so lines start from here
       for (const name of Object.keys(bodies)) {
         if (trails[name]) trails[name].addPoint(bodies[name].mesh.position);
       }
     }
-    document.getElementById('clearTrails').addEventListener('click', clearAllTrails); // *** NEW
+    document.getElementById('clearTrails').addEventListener('click', clearAllTrails);
+
+    // ---------- Selection ring (billboard) ----------
+    let highlightRing;
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.95,
+      side: THREE.DoubleSide,
+      depthTest: false,
+      depthWrite: false,
+    });
+    highlightRing = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.1, 64), ringMat);
+    highlightRing.renderOrder = 999;
+    highlightRing.visible = false;
+
+    function attachHighlightTo(name) {
+      const body = bodies[name];
+      if (!body) return;
+      if (highlightRing.parent) highlightRing.parent.remove(highlightRing);
+
+      const planetRadius = bodyConfigs[name].radius;
+      const outer = planetRadius * 1.55;
+      const inner = planetRadius * 1.25;
+      highlightRing.geometry.dispose();
+      highlightRing.geometry = new THREE.RingGeometry(inner, outer, 64);
+
+      body.mesh.add(highlightRing);
+      highlightRing.position.set(0, 0, 0);
+      highlightRing.visible = true;
+    }
+
+    // ---------- Alerts ----------
+    const alertsPanel = document.getElementById('alerts');
+    function pushAlert(text) {
+      const div = document.createElement('div');
+      div.className = 'alert';
+      const ts = new Date().toLocaleTimeString();
+      div.innerHTML = `<div>${text}</div><time>${ts}</time>`;
+      alertsPanel.appendChild(div);
+      // keep panel scrolled to bottom
+      alertsPanel.scrollTop = alertsPanel.scrollHeight;
+      console.log('[ALERT]', text);
+    }
 
     // ---------- UI wiring ----------
     const bodySelect = document.getElementById('bodySelect');
-    const aAU  = document.getElementById('aAU');
-    const ecc  = document.getElementById('ecc');
-    const inc  = document.getElementById('inc');
+    const aAU = document.getElementById('aAU');
+    const ecc = document.getElementById('ecc');
+    const inc = document.getElementById('inc');
     const raan = document.getElementById('raan');
     const argp = document.getElementById('argp');
-    const M0s  = document.getElementById('M0');
+    const M0s = document.getElementById('M0');
 
-    const aAUVal  = document.getElementById('aAUVal');
-    const eccVal  = document.getElementById('eccVal');
-    const incVal  = document.getElementById('incVal');
+    const aAUVal = document.getElementById('aAUVal');
+    const eccVal = document.getElementById('eccVal');
+    const incVal = document.getElementById('incVal');
     const raanVal = document.getElementById('raanVal');
     const argpVal = document.getElementById('argpVal');
-    const M0Val   = document.getElementById('M0Val');
+    const M0Val = document.getElementById('M0Val');
 
     const applyNow = document.getElementById('applyNow');
 
     function fillUIFromElements(el) {
-      aAU.value  = (el.a / AU).toFixed(3);
-      ecc.value  = el.e.toFixed(4);
-      inc.value  = (el.i * 180/Math.PI).toFixed(2);
-      raan.value = (el.Omega * 180/Math.PI).toFixed(2);
-      argp.value = (el.omega * 180/Math.PI).toFixed(2);
-      const Mdeg = (wrap2pi(el.M0) * 180/Math.PI);
-      M0s.value  = Mdeg.toFixed(2);
+      aAU.value = (el.a / AU).toFixed(3);
+      ecc.value = el.e.toFixed(4);
+      inc.value = (el.i * 180 / Math.PI).toFixed(2);
+      raan.value = (el.Omega * 180 / Math.PI).toFixed(2);
+      argp.value = (el.omega * 180 / Math.PI).toFixed(2);
+      const Mdeg = (wrap2pi(el.M0) * 180 / Math.PI);
+      M0s.value = Mdeg.toFixed(2);
 
-      aAUVal.textContent  = ' ' + aAU.value;
-      eccVal.textContent  = ' ' + ecc.value;
-      incVal.textContent  = ' ' + inc.value;
+      aAUVal.textContent = ' ' + aAU.value;
+      eccVal.textContent = ' ' + ecc.value;
+      incVal.textContent = ' ' + inc.value;
       raanVal.textContent = ' ' + raan.value;
       argpVal.textContent = ' ' + argp.value;
-      M0Val.textContent   = ' ' + M0s.value;
+      M0Val.textContent = ' ' + M0s.value;
     }
 
     function applyUIToSelected() {
@@ -486,7 +659,9 @@
 
       if (nbodyEnabled) {
         initIntegratorFromKepler();
-        clearAllTrails(); // *** NEW: keep trail from new initial condition
+        clearAllTrails();
+        // reset event flags
+        resetEventFlags();
       }
     }
 
@@ -495,7 +670,7 @@
       bodies[name].setElements({ ...defaultSix[name] });
       rebuildOrbit(name);
       fillUIFromElements(bodies[name].el);
-      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); }
+      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); resetEventFlags(); }
     }
     function resetAll() {
       for (const name of Object.keys(bodies)) {
@@ -503,11 +678,12 @@
         rebuildOrbit(name);
       }
       fillUIFromElements(bodies[bodySelect.value].el);
-      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); }
+      if (nbodyEnabled) { initIntegratorFromKepler(); clearAllTrails(); resetEventFlags(); }
     }
 
     bodySelect.addEventListener('change', () => {
       fillUIFromElements(bodies[bodySelect.value].el);
+      attachHighlightTo(bodySelect.value);
       if (followEnabled) {
         const pos = bodies[bodySelect.value].mesh.position;
         const offset = camera.position.clone().sub(controls.target);
@@ -533,7 +709,7 @@
 
     // Grid toggle & time
     const timeStepSlider = document.getElementById('timeStep');
-    const timeStepValue  = document.getElementById('timeStepValue');
+    const timeStepValue = document.getElementById('timeStepValue');
     let simSecondsPerRealSecond = Number(timeStepSlider.value) * 3600;
     timeStepSlider.addEventListener('input', (e) => {
       simSecondsPerRealSecond = Number(e.target.value) * 3600;
@@ -563,28 +739,30 @@
     let nbodyEnabled = false;
     const integratorBtn = document.getElementById('integratorBtn');
 
-    let nbState = {}; // name -> {pos, vel, mass}
+    let nbState = {}; // name -> {pos: THREE.Vector3 (m), vel: THREE.Vector3 (m/s), mass}
 
     function initIntegratorFromKepler() {
       const names = Object.keys(bodies);
       const rH = {};
       const vH = {};
 
+      // Positions and velocities from analytic elements at current sim time
       for (const name of names) {
         const el = bodies[name].el;
         const dt = simTime - el.epoch;
-        const n  = Math.sqrt(MU_SUN / Math.pow(el.a,3));
-        const M  = wrap2pi(el.M0 + n*dt);
+        const n = Math.sqrt(MU_SUN / Math.pow(el.a, 3));
+        const M = wrap2pi(el.M0 + n * dt);
         const st = elementsToState(el.a, el.e, el.i, el.Omega, el.omega, M);
         rH[name] = new THREE.Vector3(st.x, st.y, st.z);
         vH[name] = new THREE.Vector3(st.vx, st.vy, st.vz);
       }
 
-      let sum_m   = M_SUN;
+      // Put the system in (approx) barycentric frame so Σ m r ≈ 0 and Σ m v ≈ 0
+      let sum_m = M_SUN;
       const sum_m_r = new THREE.Vector3();
       const sum_m_v = new THREE.Vector3();
       for (const name of names) {
-        sum_m   += MASS[name];
+        sum_m += MASS[name];
         sum_m_r.add(rH[name].clone().multiplyScalar(MASS[name]));
         sum_m_v.add(vH[name].clone().multiplyScalar(MASS[name]));
       }
@@ -601,21 +779,21 @@
         };
       }
 
-      // sync meshes to barycentric state
-      sunMesh.position.set(nbState['Sun'].pos.x*SCALE, nbState['Sun'].pos.z*SCALE, nbState['Sun'].pos.y*SCALE);
+      // sync meshes
+      sunMesh.position.set(nbState['Sun'].pos.x * SCALE, nbState['Sun'].pos.z * SCALE, nbState['Sun'].pos.y * SCALE);
       for (const name of names) {
         const p = nbState[name].pos;
-        bodies[name].mesh.position.set(p.x*SCALE, p.z*SCALE, p.y*SCALE);
+        bodies[name].mesh.position.set(p.x * SCALE, p.z * SCALE, p.y * SCALE);
       }
     }
 
     function computeAccelerations(state) {
       const names = Object.keys(state);
       const acc = {};
-      for (const n of names) acc[n] = new THREE.Vector3(0,0,0);
+      for (const n of names) acc[n] = new THREE.Vector3(0, 0, 0);
 
-      for (let i=0; i<names.length; i++) {
-        for (let j=i+1; j<names.length; j++) {
+      for (let i = 0; i < names.length; i++) {
+        for (let j = i + 1; j < names.length; j++) {
           const ni = names[i], nj = names[j];
           const pi = state[ni].pos, pj = state[nj].pos;
           const rij = new THREE.Vector3().subVectors(pj, pi);
@@ -633,26 +811,93 @@
 
     function leapfrogStep(state, h) {
       let a = computeAccelerations(state);
-      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h*0.5);
+      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h * 0.5);
       for (const name of Object.keys(state)) state[name].pos.addScaledVector(state[name].vel, h);
       a = computeAccelerations(state);
-      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h*0.5);
+      for (const name of Object.keys(state)) state[name].vel.addScaledVector(a[name], h * 0.5);
     }
 
     function stepNBody(dtSimSeconds) {
       if (dtSimSeconds === 0) return;
-      const maxH = INT_MAX_STEP_HOURS * 3600;
-      let steps = Math.ceil(Math.abs(dtSimSeconds) / maxH);
-      steps = Math.max(1, Math.min(steps, INT_MAX_SUBSTEPS));
-      const h = dtSimSeconds / steps;
-      for (let s=0; s<steps; s++) {
+
+      const maxH = INT_MAX_STEP_HOURS * 3600;   // your stability step cap
+      let remaining = dtSimSeconds;
+      const sgn = Math.sign(remaining);
+
+      while (Math.abs(remaining) > 1e-9) {
+        const h = sgn * Math.min(Math.abs(remaining), maxH);
         leapfrogStep(nbState, h);
+        remaining -= h;
       }
+
       // Update meshes
-      sunMesh.position.set(nbState['Sun'].pos.x*SCALE, nbState['Sun'].pos.z*SCALE, nbState['Sun'].pos.y*SCALE);
+      sunMesh.position.set(nbState['Sun'].pos.x * SCALE, nbState['Sun'].pos.z * SCALE, nbState['Sun'].pos.y * SCALE);
       for (const name of Object.keys(bodies)) {
         const p = nbState[name].pos;
-        bodies[name].mesh.position.set(p.x*SCALE, p.z*SCALE, p.y*SCALE);
+        bodies[name].mesh.position.set(p.x * SCALE, p.z * SCALE, p.y * SCALE);
+      }
+    }
+
+
+    // ---------- Event detection (collisions & escapes) ----------
+    // Flags so we only alert once per event
+    const collidedPairs = new Set(); // key: "A|B" with A<B
+    const escapedBodies = new Set();
+
+    function resetEventFlags() {
+      collidedPairs.clear();
+      escapedBodies.clear();
+    }
+
+    // Helper to build sorted pair key
+    function pairKey(a, b) { return (a < b) ? `${a}|${b}` : `${b}|${a}`; }
+
+    function checkCollisionsAndEscapes() {
+      const names = Object.keys(bodies);
+
+      // 1) Pairwise collisions (skip the Sun)
+      for (let i = 0; i < names.length; i++) {
+        const A = names[i]; if (A === 'Sun') continue;
+        for (let j = i + 1; j < names.length; j++) {
+          const B = names[j]; if (B === 'Sun') continue;
+          const pa = nbState[A].pos, pb = nbState[B].pos;
+          const dist = pa.distanceTo(pb); // meters
+
+          const limit = (RADIUS_M[A] + RADIUS_M[B]); // meters
+          if (dist <= limit) {
+            const key = pairKey(A, B);
+            if (!collidedPairs.has(key)) {
+              collidedPairs.add(key);
+              pushAlert(`${A} and ${B} collided`);
+            }
+          }
+        }
+      }
+
+      // 2) Escape relative to the Sun (specific energy > 0 and far away)
+      const rSun = nbState['Sun'].pos;
+      const vSun = nbState['Sun'].vel;
+      const ESCAPE_DISTANCE_M = 60 * AU; // be conservative; also avoids early blips
+
+      for (const name of names) {
+        if (name === 'Sun') continue;
+        if (escapedBodies.has(name)) continue;
+
+        const r = nbState[name].pos.clone().sub(rSun); // meters
+        const v = nbState[name].vel.clone().sub(vSun); // m/s
+        const rmag = r.length();
+        const v2 = v.lengthSq();
+
+        // specific orbital energy ε = v^2/2 - μ/r (relative to Sun)
+        const eps = 0.5 * v2 - (MU_SUN / rmag);
+
+        // Radial outward check to avoid oscillation near ~0
+        const radialOutward = r.dot(v) > 0;
+
+        if (eps > 0 && rmag > ESCAPE_DISTANCE_M && radialOutward) {
+          escapedBodies.add(name);
+          pushAlert(`${name} has escaped (hyperbolic, ε > 0)`);
+        }
       }
     }
 
@@ -662,20 +907,32 @@
       integratorBtn.textContent = 'N-body: ' + (nbodyEnabled ? 'ON' : 'OFF');
       integratorBtn.title = nbodyEnabled ? 'Currently integrating mutual gravity' : 'Currently using analytic Kepler motion';
 
-      // Keep analytic orbits visible as reference
       setOrbitVisibility(true);
 
       if (nbodyEnabled) {
+        initTrails();
         initIntegratorFromKepler();
-        initTrails();         // *** NEW: start capturing N-body paths
+        resetEventFlags();
+        pushAlert('N-body integration started (states seeded from orbital elements at current time).');
       }
     });
 
     // ---------- Animate ----------
-    let simTime = Date.UTC(2000,0,1,12,0,0)/1000; // J2000 start
+    let simTime = Date.UTC(2000, 0, 1, 12, 0, 0) / 1000; // J2000 start
     let lastMs;
     const tmpVec = new THREE.Vector3();
     const desiredCam = new THREE.Vector3();
+
+    let pageHidden = false;
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        pageHidden = true;
+      } else {
+        // Resume cleanly: reset the rAF baseline so the next realDelta ≈ 0
+        pageHidden = false;
+        lastMs = undefined;
+      }
+    });
 
     function resizeRendererToDisplaySize(renderer) {
       const c = renderer.domElement;
@@ -686,8 +943,12 @@
     }
 
     function animate(ms) {
+      if (pageHidden) {            // skip integrating while hidden
+        requestAnimationFrame(animate);
+        return;
+      }
       if (lastMs === undefined) lastMs = ms;
-      const realDelta = (ms - lastMs)/1000;
+      const realDelta = (ms - lastMs) / 1000;
       lastMs = ms;
 
       const dtSim = realDelta * simSecondsPerRealSecond;
@@ -695,10 +956,15 @@
 
       if (nbodyEnabled) {
         stepNBody(dtSim);
-        // *** NEW: record trail points after state update
+
+        // record trails
         for (const name of Object.keys(bodies)) {
           trails[name]?.addPoint(bodies[name].mesh.position);
         }
+
+        // check events AFTER updating positions
+        checkCollisionsAndEscapes();
+
       } else {
         for (const b of Object.values(bodies)) b.update(simTime);
       }
@@ -714,6 +980,11 @@
           camera.position.lerp(desiredCam, FOLLOW_SMOOTH);
           controls.target.copy(tmpVec);
         }
+      }
+
+      // Billboard the selection ring toward the camera
+      if (highlightRing.visible) {
+        highlightRing.quaternion.copy(camera.quaternion);
       }
 
       if (resizeRendererToDisplaySize(renderer)) {
@@ -733,8 +1004,10 @@
       camera.updateProjectionMatrix();
     });
 
-    // Init UI with current selection
+    // Init UI with current selection + attach ring once
     fillUIFromElements(bodies[bodySelect.value].el);
+    attachHighlightTo(bodySelect.value);
   </script>
 </body>
+
 </html>
